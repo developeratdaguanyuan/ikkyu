@@ -1,4 +1,4 @@
-package ikkyu.cfo.focus.builddata;
+package ikkyu.cfo.builddata;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,18 +20,18 @@ import nlp.tokenizer.EnglishTokenizer;
 public class FocusBuildData {  
   // Input files
   private static final String FREEBASE_ENTITY_NAME_PATH =
-	  "../../../../data/entity_tokenizedname_map_bak.txt";
+	  "../../data/entity_tokenizedname_map_bak.txt";
   private static final String TRAIN_FILE_PATH =
-      "../../../../data/SimpleQuestions_v2/annotated_fb_data_train.txt";
+      "../../data/SimpleQuestions_v2/annotated_fb_data_train.txt";
   private static final String VALID_FILE_PATH =
-      "../../../../data/SimpleQuestions_v2/annotated_fb_data_valid.txt";
+      "../../data/SimpleQuestions_v2/annotated_fb_data_valid.txt";
   private static final String TEST_FILE_PATH =
-      "../../../../data/SimpleQuestions_v2/annotated_fb_data_test.txt";
+      "../../data/SimpleQuestions_v2/annotated_fb_data_test.txt";
 
   // Output files
-  private static final String FOCUS_TRAIN_FILE_PATH = "../../data/focus_train.txt";
-  private static final String FOCUS_VALID_FILE_PATH = "../../data/focus_valid.txt";
-  private static final String FOCUS_TEST_FILE_PATH = "../../data/focus_test.txt";
+  private static final String FOCUS_TRAIN_FILE_PATH = "../focus/data/focus_train.txt";
+  private static final String FOCUS_VALID_FILE_PATH = "../focus/data/focus_valid.txt";
+  private static final String FOCUS_TEST_FILE_PATH = "../focus/data/focus_test.txt";
   
   
   private static void getSentenceFocus(String question_path, String entity_name_path, String oPath)
