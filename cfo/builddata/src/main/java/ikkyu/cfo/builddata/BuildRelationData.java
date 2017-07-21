@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import nlp.tokenizer.EnglishTokenizer;
 
-public class RelationBuildData {
+public class BuildRelationData {
 	// Input files
 	private static final String FREEBASE_RELATION_NAME_PATH = "../../data/FB5M-relation-id-tiny.txt";
 	private static final String TRAIN_FILE_PATH = "../../data/SimpleQuestions_v2/annotated_fb_data_train.txt";

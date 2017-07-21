@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import nlp.tokenizer.EnglishTokenizer;
 
-public class FocusBuildData {  
+public class BuildFocusData {  
   // Input files
   private static final String FREEBASE_ENTITY_NAME_PATH =
 	  "../../data/entity_tokenizedname_map_bak.txt";
