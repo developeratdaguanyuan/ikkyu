@@ -48,10 +48,10 @@ public class BuildRelationData {
 		reader = new BufferedReader(new FileReader(fin));
 		while ((line = reader.readLine()) != null) {
 			String[] tokens = line.trim().split("\t");
-			
+
 			String relation_name = tokens[1].trim().replace("www.freebase.com", "");
 			String relation_id = relation_id_map.get(relation_name);
-			
+
 			String question = tokens[3].trim();
 			List<String> question_tokens = EnglishTokenizer.tokenizer(question.toLowerCase());
 			writer.write(question_tokens.stream().collect(Collectors.joining(" ")) + "\t" + relation_id + "\n");
@@ -59,7 +59,7 @@ public class BuildRelationData {
 		reader.close();
 		writer.close();
 	}
-	
+
 	public static void main(String[] args) throws IOException {
 		buildRelationData(TRAIN_FILE_PATH, FREEBASE_RELATION_NAME_PATH, RELATION_TRAIN_FILE_PATH);
 		buildRelationData(VALID_FILE_PATH, FREEBASE_RELATION_NAME_PATH, RELATION_VALID_FILE_PATH);
