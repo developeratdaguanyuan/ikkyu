@@ -15,7 +15,7 @@ import nlp.tokenizer.EnglishTokenizer;
 
 public class BuildRelationData {
   // Input files
-  private static final String FREEBASE_RELATION_NAME_PATH = "../../data/FB5M-relation-id-tiny.txt";
+  private static final String FREEBASE_RELATION_NAME_PATH = "../data/transE/FB5M-relation-id.txt";
   private static final String TRAIN_FILE_PATH =
       "../../data/SimpleQuestions_v2/annotated_fb_data_train.txt";
   private static final String VALID_FILE_PATH =
@@ -24,9 +24,9 @@ public class BuildRelationData {
       "../../data/SimpleQuestions_v2/annotated_fb_data_test.txt";
 
   // Output files
-  private static final String RELATION_TRAIN_FILE_PATH = "../relation/data/relation_train.txt";
-  private static final String RELATION_VALID_FILE_PATH = "../relation/data/relation_valid.txt";
-  private static final String RELATION_TEST_FILE_PATH = "../relation/data/relation_test.txt";
+  private static final String RELATION_TRAIN_FILE_PATH = "../data/relation/relation_train.txt";
+  private static final String RELATION_VALID_FILE_PATH = "../data/relation/relation_valid.txt";
+  private static final String RELATION_TEST_FILE_PATH = "../data/relation/relation_test.txt";
 
   private static void buildRelationData(String question_path, String relation_name_path,
       String oPath) throws IOException {

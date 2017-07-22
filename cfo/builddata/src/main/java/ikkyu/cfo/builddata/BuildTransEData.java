@@ -22,9 +22,9 @@ public class BuildTransEData {
   // Input Paths
   private static final String FREEBASE_5M_PATH = "../../data/freebase-FB5M.txt";
   // Output Paths
-  private static final String FREEBASE_TRIPLES_PATH = "../transE/data/FB5M-triples.txt";
-  private static final String FREEBASE_ENTITY_ID_PATH = "../transE/data/FB5M-entity-id.txt";
-  private static final String FREEBASE_RELATION_ID_PATH = "../transE/data/FB5M-relation-id.txt";
+  private static final String FREEBASE_TRIPLES_PATH = "../data/transE/FB5M-triples.txt";
+  private static final String FREEBASE_ENTITY_ID_PATH = "../data/transE/FB5M-entity-id.txt";
+  private static final String FREEBASE_RELATION_ID_PATH = "../data/transE/FB5M-relation-id.txt";
 
   private static HashMap<String, Integer> entityMap = new HashMap<String, Integer>();
   private static HashMap<String, Integer> predicateMap = new HashMap<String, Integer>();
