@@ -29,9 +29,9 @@ public class BuildFocusData {
       "../../data/SimpleQuestions_v2/annotated_fb_data_test.txt";
 
   // Output files
-  private static final String FOCUS_TRAIN_FILE_PATH = "../focus/data/focus_train.txt";
-  private static final String FOCUS_VALID_FILE_PATH = "../focus/data/focus_valid.txt";
-  private static final String FOCUS_TEST_FILE_PATH = "../focus/data/focus_test.txt";
+  private static final String FOCUS_TRAIN_FILE_PATH = "../data/focus/focus_train.txt";
+  private static final String FOCUS_VALID_FILE_PATH = "../data/focus/focus_valid.txt";
+  private static final String FOCUS_TEST_FILE_PATH = "../data/focus/focus_test.txt";
 
   private static void getSentenceFocus(String question_path, String entity_name_path, String oPath)
       throws IOException {
