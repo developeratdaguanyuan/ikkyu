@@ -105,7 +105,7 @@ class GRU(object):
     with tf.Session() as self.sess:
       self.sess.run(tf.global_variables_initializer())
 
-      train_loss, valid_loss, rank = 0, float('inf'), 0
+      train_loss, valid_loss, valid_rank, rank = 0, float('inf'), float('inf'), 0
       num_iteration = num_epoch * train_data_producer.size / self.batch
       for i in range(num_iteration):
         questions, tags, neg_tags = train_data_producer.next(self.batch)
@@ -127,8 +127,12 @@ class GRU(object):
           logging.info("[valid loss] %5.5f [valid rank] %5.5f", valid_loss_t, valid_rank_t)
 
           # write model
-          if valid_loss_t <= valid_loss:
-            valid_loss = valid_loss_t
+          # if valid_loss_t <= valid_loss:
+          #  valid_loss = valid_loss_t
+          #  save_path = saver.save(self.sess, "../save_models/gru_" + str(i))
+          #  logging.info("Model saved in file: %s", save_path)
+          if valid_rank_t <= valid_rank:
+            valid_rank = valid_rank_t
             save_path = saver.save(self.sess, "../save_models/gru_" + str(i))
             logging.info("Model saved in file: %s", save_path)
 
