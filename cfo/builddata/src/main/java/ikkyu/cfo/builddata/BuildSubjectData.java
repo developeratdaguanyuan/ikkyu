@@ -67,23 +67,27 @@ public class BuildSubjectData {
         if (name == null) {
           continue;
         }
-        if (name.length() > 0 && name.charAt(0) == '\"' && name.charAt(name.length() - 1) == '\"') {
+        if (name.length() > 1 && name.charAt(0) == '\"' && name.charAt(name.length() - 1) == '\"') {
           name = name.substring(1, name.length() - 1);
         }
-        List<Pair> pair_list = entity_search.search(name);
-        for (Pair p : pair_list) {
-          String neg_sample_mid = p.mid;
-          if (neg_sample_mid.equals(subject_mid)) {
-            ++cnt;
-            continue;
+        try {
+          List<Pair> pair_list = entity_search.search(name);
+          for (Pair p : pair_list) {
+            String neg_sample_mid = p.mid;
+            if (neg_sample_mid.equals(subject_mid)) {
+              ++cnt;
+              continue;
+            }
+            jedis.select(0);
+            String neg_id = jedis.get(neg_sample_mid);
+            if (neg_id != null) {
+              jedis.select(2);
+              String neg_vector = jedis.get(neg_id);
+              writer.write(question + "\t0\t" + neg_vector + "\n");
+            }
           }
-          jedis.select(0);
-          String neg_id = jedis.get(neg_sample_mid);
-          if (neg_id != null) {
-            jedis.select(2);
-            String neg_vector = jedis.get(neg_id);
-            writer.write(question + "\t0\t" + neg_vector + "\n");
-          }
+        } catch (Exception e) {
+          System.err.println("KG Search Error!");
         }
       }
       System.out.println("There are " + cnt + " results from Google API containg our correct mid");
@@ -100,7 +104,6 @@ public class BuildSubjectData {
     buildSubjectData(TRAIN_FILE_PATH, SUBJECT_TRAIN_FILE_PATH);
     buildSubjectData(VALID_FILE_PATH, SUBJECT_VALID_FILE_PATH);
     buildSubjectData(TEST_FILE_PATH, SUBJECT_TEST_FILE_PATH);
-
   }
 
 }
