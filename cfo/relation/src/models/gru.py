@@ -18,9 +18,7 @@ class GRU(object):
     self.relation_sz = relation_size
 
     # Placeholders
-    # Sentence placeholders with shape (batch, time_steps)
     self.s = tf.placeholder(tf.int32, [self.batch, None])
-    # Label placeholders with shape (batch, 1)
     self.y = tf.placeholder(tf.int32, [self.batch])
     self.y_neg = tf.placeholder(tf.int32, [self.batch, self.neg_sample_num])
 
@@ -83,13 +81,6 @@ class GRU(object):
 
 
   def _apply_gru(self, input, unit_num, scope=None, reuse=False):
-    '''
-    GRU model
-    :param input: word vectors of a sentence with shape (batch, length, embedding_dim)
-    :param unit_num: number of unit in LSTM
-    :param reuse: reuse layers
-    :return:
-    '''
     scope_name = scope or 'gru'
     with tf.variable_scope(scope_name, reuse=reuse):
       initializer = tf.random_uniform_initializer(-0.1, 0.1)
@@ -126,11 +117,6 @@ class GRU(object):
           valid_loss_t, valid_rank_t = self._evaluate(valid_data_producer)
           logging.info("[valid loss] %5.5f [valid rank] %5.5f", valid_loss_t, valid_rank_t)
 
-          # write model
-          # if valid_loss_t <= valid_loss:
-          #  valid_loss = valid_loss_t
-          #  save_path = saver.save(self.sess, "../save_models/gru_" + str(i))
-          #  logging.info("Model saved in file: %s", save_path)
           if valid_rank_t <= valid_rank:
             valid_rank = valid_rank_t
             save_path = saver.save(self.sess, "../save_models/gru_" + str(i))
@@ -138,11 +124,6 @@ class GRU(object):
 
 
   def _evaluate(self, data_producer):
-    '''
-    Do Evaluation during training
-    :param data_producer: data producer
-    :return: log loss
-    '''
     loss, rank = 0, 0
     while True:
       data = data_producer.next(self.batch)
@@ -160,12 +141,6 @@ class GRU(object):
 
 
   def evaluate(self, data_producer, model_path):
-    '''
-    Do Evaluation
-    :param data_producer: data producer
-    :param model_path: model path
-    :return: log loss
-    '''
     with tf.Session() as self.sess:
       self.sess.run(tf.global_variables_initializer())
       saver = tf.train.Saver()

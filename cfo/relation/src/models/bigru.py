@@ -19,11 +19,8 @@ class BiGRU(object):
     self.relation_sz = relation_size
 
     # Placeholders
-    # Sentence placeholders with shape (batch, time_steps)
     self.s = tf.placeholder(tf.int32, [self.batch, None])
-    # Sentence length placeholders with shape (batch)
     self.lengths = tf.placeholder(tf.int32, [self.batch])
-    # Label placeholders with shape (batch, 1)
     self.y = tf.placeholder(tf.int32, [self.batch])
     self.y_neg = tf.placeholder(tf.int32, [self.batch, self.neg_sample_num])
 
@@ -65,6 +62,7 @@ class BiGRU(object):
     tmp = tf.multiply(input_1, input_2)
     return tf.reduce_sum(tmp, 1, keep_dims=True)
 
+
   def _apply_linear(self, inputs, input_unit_num, output_unit_num, scope=None, reuse=False):
     rank = len(inputs.get_shape())
     if rank == 3:
@@ -83,6 +81,7 @@ class BiGRU(object):
       return tf.reshape(z, output_shape)
 
     return z
+
 
   def _apply_relu(self, inputs, input_unit_num, output_unit_num, scope=None, reuse=False):
     rank = len(inputs.get_shape())
@@ -152,11 +151,6 @@ class BiGRU(object):
           valid_loss_t, valid_rank_t = self._evaluate(valid_data_producer)
           logging.info("[valid loss] %5.5f [valid rank] %5.5f", valid_loss_t, valid_rank_t)
 
-          # write model
-          # if valid_loss_t <= valid_loss:
-          #  valid_loss = valid_loss_t
-          #  save_path = saver.save(self.sess, "../save_models/bigru_" + str(i))
-          #  logging.info("Model saved in file: %s", save_path)
           if valid_rank_t <= valid_rank:
             valid_rank = valid_rank_t
             save_path = saver.save(self.sess, "../save_models/bigru_" + str(i))
@@ -164,11 +158,6 @@ class BiGRU(object):
             
 
   def _evaluate(self, data_producer):
-    '''
-    Do Evaluation during training
-    :param data_producer: data producer
-    :return: log loss
-    '''
     loss, rank = 0, 0
     while True:
       data = data_producer.next(self.batch)
@@ -187,12 +176,6 @@ class BiGRU(object):
 
 
   def evaluate(self, data_producer, model_path):
-    '''
-    Do Evaluation
-    :param data_producer: data producer
-    :param model_path: model path
-    :return: log loss
-    '''
     with tf.Session() as self.sess:
       self.sess.run(tf.global_variables_initializer())
       saver = tf.train.Saver()
