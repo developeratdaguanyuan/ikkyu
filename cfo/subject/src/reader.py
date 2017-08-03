@@ -2,8 +2,6 @@ import csv
 import os
 import random
 import numpy as np
-from random import shuffle
-
 
 # ------------------ Load Word Embedding and dictionary--------------------
 def load_vocabulary(path):
@@ -57,45 +55,72 @@ def _get_word_embedding(wv_path, word_to_id):
 # ----------------------------Data Producer--------------------------------
 class DataProducer(object):
     def __init__(self, word_to_id, path, cycle=True):
-        self.questions, self.tags, self.entity_embeddings = list(), list(), list()
+        self.questions, self.embeddings, self.neg_embeddings = list(), list(), list()
         file = open(path)
         lines = file.readlines()
         file.close()
 
-        shuffle(lines)
+        lastQ = ''
+        question = list()
+        embedding = list()
+        idx = 1
         for line in lines:
             tokens = line.strip().split('\t')
-            question = [word_to_id[t] if t in word_to_id else 0 for t in tokens[0].strip().split(' ')]
-            tag = int(tokens[1].strip())
-            embedding = [float(value) for value in tokens[2].strip().split(' ')]
-            self.questions.append(question)
-            self.tags.append(tag)
-            self.entity_embeddings.append(embedding)
+            if lastQ == '' or tokens[0] != lastQ:
+                if tokens[1] != '1':
+                    print idx
+                    print 'ERROR: line 71'
+                    break
+                lastQ = tokens[0]
+                question = [word_to_id[t] if t in word_to_id else 0 for t in lastQ.strip().split(' ')]
+                embedding = [float(value) for value in tokens[2].strip().split(' ')]
+            else:
+                if tokens[1] != '0':
+                    print 'ERROR: line 78'
+                    break
+                neg_embeddings = [float(value) for value in tokens[2].strip().split(' ')]
+                self.questions.append(question)
+                self.embeddings.append(embedding)
+                self.neg_embeddings.append(neg_embeddings)
+            idx += 1
 
+        if len(self.questions) != len(self.embeddings) \
+            or len(self.questions) != len(self.neg_embeddings):
+            print 'ERROR: line 87'
+
+        self._shuffle()
         self.cycle = cycle
         self.size = len(self.questions)
         self.cursor = 0
+
+
+    def _shuffle(self):
+        tmp = zip(self.questions, self.embeddings, self.neg_embeddings)
+        random.shuffle(tmp)
+        self.questions, self.embeddings, self.neg_embeddings = zip(*tmp)
 
     def next(self, n):
         if (self.cursor + n - 1 >= self.size):
             self.cursor = 0
             if self.cycle is False:
                 return None
+            self._shuffle();
         curr_questions = self.questions[self.cursor:self.cursor+n]
-        curr_tags = self.tags[self.cursor:self.cursor+n]
-        curr_entity_embeddings = self.entity_embeddings[self.cursor:self.cursor+n]
+        curr_embeddings = self.embeddings[self.cursor:self.cursor+n]
+        curr_neg_embeddings = self.neg_embeddings[self.cursor:self.cursor+n]
+
         self.cursor += n
 
         lengths = [len(q) for q in curr_questions]
         max_length = max(l for l in lengths)
 
         question_list = np.zeros([n, max_length], dtype=np.int32)
-        tag_list = np.array(curr_tags, dtype=np.float32)
-        embedding_list = np.matrix(curr_entity_embeddings)
         for i, q in enumerate(question_list):
             q[:lengths[i]] = np.array(curr_questions[i][:lengths[i]])
+        embedding_list = np.matrix(curr_embeddings)
+        neg_embedding_list = np.matrix(curr_neg_embeddings)
 
-        return question_list, tag_list, embedding_list
+        return question_list, embedding_list, neg_embedding_list
 
 
 if __name__ == "__main__":
@@ -103,12 +128,12 @@ if __name__ == "__main__":
     word_to_id, word_embedding = load_vocabulary(word_embedding_path)
 
     producer = DataProducer(word_to_id, '../../data/subject/subject_test.txt')
-    questions, tags, embeddings = producer.next(20)
+    questions, embeddings, neg_embeddings = producer.next(20)
     print 'questions:'
     print questions
     print
-    print 'tags:'
-    print tags
-    print
     print 'embeddings:'
     print embeddings
+    print
+    print 'neg embeddings:'
+    print neg_embeddings
