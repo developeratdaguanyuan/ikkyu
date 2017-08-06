@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import request
 
+import os
 import tensorflow as tf
 import numpy as np
 from models import bigru
@@ -13,6 +14,7 @@ word_embedding_path = '../../../data/glove/glove.6B.300d.txt'
 word_to_id, word_embedding = reader.load_vocabulary(word_embedding_path)
 model_path = '../save_models/bigru_4206'
 
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
 graph = bigru.BiGRU(len(word_embedding), 2, word_embedding, batch=1)
 sess = tf.Session()
 sess.run(tf.global_variables_initializer())
@@ -28,7 +30,6 @@ def focus():
     qust_idx[0] = np.array(qust[:])
     lengths = np.array([qust_idx.shape[1]])
 
-    #all_ones = np.ones([1, len(qust)], dtype=np.int32)
     feed = {graph.words: qust_idx, graph.lengths: lengths}
     ret = sess.run([graph.sequence_tags], feed_dict=feed)
     print ret[0]
