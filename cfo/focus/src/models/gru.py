@@ -36,6 +36,7 @@ class GRU(object):
 
     # Project Layer
     logits = self._apply_linear(z, self.hidden_dim, self.class_sz)
+    self.sequence_tags = tf.to_int32(tf.argmax(logits, 2))
 
     # Loss & Optimizer
     all_ones = tf.ones([self.batch, tf.shape(self.words)[1]])
