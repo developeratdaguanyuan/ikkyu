@@ -21,7 +21,6 @@ class BiGRU(object):
     self.lengths = tf.placeholder(tf.int32, [self.batch])
 
     # Embedding layer
-    # Tensor e{1, 2} have shape (batch, time_steps, embedding_dim)
     self.embeddings = tf.get_variable('embedding_matrix', dtype='float',
                                       initializer=tf.constant_initializer(word_vectors),
                                       shape=[self.vocab_sz, self.embedding_dim], trainable=False)
@@ -38,6 +37,7 @@ class BiGRU(object):
 
     # Project Layer
     logits = self._apply_linear(z, self.hidden_dim * 2, self.class_sz)
+    self.sequence_tags = tf.to_int32(tf.argmax(logits, 2))
 
     # Loss & Optimizer
     all_ones = tf.ones([self.batch, tf.shape(self.words)[1]])
