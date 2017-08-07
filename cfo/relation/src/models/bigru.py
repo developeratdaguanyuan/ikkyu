@@ -57,6 +57,10 @@ class BiGRU(object):
     self.rank = tf.count_nonzero(tf.maximum(0., score_neg - score_pos))
     self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
 
+    # Service Layer
+    y_p = self._apply_relu(self.rel_embeddings, self.relation_dim, self.hidden_dim, 'relation_project', True)
+    z_service = z[0]
+    self.score = tf.tensordot(z_service, y_p, [[0], [1]])
 
   def _apply_dot(self, input_1, input_2):
     tmp = tf.multiply(input_1, input_2)
