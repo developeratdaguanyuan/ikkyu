@@ -17,13 +17,13 @@ def main(_):
     train_data_producer = reader.DataProducer(word_to_id, train_path, 1024)
     valid_data_producer = reader.DataProducer(word_to_id, valid_path, 1024, False)
 
-    # graph = bigru.BiGRU(len(word_embedding), len(relation_embedding),
-    #                     word_embedding, relation_embedding)
-    # graph.train(train_data_producer, valid_data_producer, 100)
-
-    graph = gru.GRU(len(word_embedding), len(relation_embedding),
-                    word_embedding, relation_embedding)
+    graph = bigru.BiGRU(len(word_embedding), len(relation_embedding),
+                        word_embedding, relation_embedding)
     graph.train(train_data_producer, valid_data_producer, 100)
+
+    # graph = gru.GRU(len(word_embedding), len(relation_embedding),
+    #                 word_embedding, relation_embedding)
+    # graph.train(train_data_producer, valid_data_producer, 100)
 
 if __name__ == "__main__":
     tf.app.run()
