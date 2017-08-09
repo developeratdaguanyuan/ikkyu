@@ -14,7 +14,7 @@ def main(_):
     test_data_producer = reader.DataProducer(word_to_id, test_path, 1024, False)
 
     # BiGRU
-    model_path = '../save_models/bigru_9108'
+    model_path = '../save_models/bigru_16698'
     graph = bigru.BiGRU(len(word_embedding), len(relation_embedding),
                         word_embedding, relation_embedding)
     print graph.evaluate(test_data_producer, model_path)
