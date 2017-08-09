@@ -25,7 +25,7 @@ saver.restore(sess, model_path)
 @app.route('/focus_server', methods=['POST'])
 def focus():
   if request.method == 'POST':
-    qust = [word_to_id[t] if t in word_to_id else 0 for t in request.form['qust'].strip().split(' ')]
+    qust = [word_to_id[t] if t in word_to_id else 0 for t in request.form['question'].strip().split(' ')]
     qust_idx = np.zeros([1, len(qust)], dtype=np.int32)
     qust_idx[0] = np.array(qust[:])
     lengths = np.array([qust_idx.shape[1]])
@@ -33,5 +33,5 @@ def focus():
     feed = {graph.words: qust_idx, graph.lengths: lengths}
     ret = sess.run([graph.sequence_tags], feed_dict=feed)
     print ret[0]
-    return 'Got your question: ' + ','.join(str(e) for e in qust) + '\n'
+    return 'Successful: ' + ','.join(str(e) for e in ret[0]) + '\n'
   return 'focus!'
