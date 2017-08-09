@@ -7,7 +7,6 @@ import numpy as np
 from models import bigru
 import reader
 
-
 app = Flask(__name__)
 
 word_embedding_path = '../../../data/glove/glove.6B.300d.txt'
@@ -30,7 +29,7 @@ saver.restore(sess, model_path)
 @app.route('/relation_server', methods=['POST'])
 def relation():
   if request.method == 'POST':
-    qust = [word_to_id[t] if t in word_to_id else 0 for t in request.form['qust'].strip().split(' ')]
+    qust = [word_to_id[t] if t in word_to_id else 0 for t in request.form['question'].strip().split(' ')]
     qust_idx = np.zeros([1, len(qust)], dtype=np.int32)
     qust_idx[0] = np.array(qust[:])
     lengths = np.array([qust_idx.shape[1]])
@@ -40,5 +39,5 @@ def relation():
     score = ret[0]
     sorted_idx = sorted(range(len(score)), key=lambda x: score[x], reverse=True)[:100]
 
-    return 'Got your question: ' + ','.join(str(e) for e in sorted_idx) + '\n'
+    return 'relation ranking: ' + ','.join(str(e) for e in sorted_idx)
   return 'relation server!'
