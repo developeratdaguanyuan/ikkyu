@@ -77,8 +77,6 @@ public class BuildFocusData {
         boolean label = false;
         List<String> question_tokens = EnglishTokenizer.tokenizer(question.toLowerCase());
         List<String> sub_tokens = Arrays.asList(buffer.get(sub_id).split(" "));
-        // List<String> question_tokens = Arrays.asList(question.split("
-        // "));
         for (int i = 0; i < question_tokens.size(); i++) {
           int q = i, f = 0;
           while (q < question_tokens.size() && f < sub_tokens.size()) {
