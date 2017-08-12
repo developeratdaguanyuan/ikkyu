@@ -32,6 +32,6 @@ def focus():
 
     feed = {graph.words: qust_idx, graph.lengths: lengths}
     ret = sess.run([graph.sequence_tags], feed_dict=feed)
-    print ret[0]
-    return 'Successful: ' + ','.join(str(e) for e in ret[0]) + '\n'
+    print ret[0][0]
+    return 'focus tagging: ' + ','.join(str(e) for e in ret[0][0]) + '\n'
   return 'focus!'
