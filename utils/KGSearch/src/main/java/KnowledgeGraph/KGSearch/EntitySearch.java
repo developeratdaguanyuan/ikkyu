@@ -67,7 +67,7 @@ public class EntitySearch {
 
     List<Pair> rank_list = new ArrayList<Pair>();
     String urlToRead = "https://kgsearch.googleapis.com/v1/entities:search?query="
-        + URLEncoder.encode(query, "UTF-8") + "&key=" + password + "&limit=10&indent=True";
+        + URLEncoder.encode(query, "UTF-8") + "&key=" + password + "&limit=20&indent=True";
     HttpURLConnection conn = null;
     for (int i = 0; i < 2; i++) {
       URL url = new URL(urlToRead);
