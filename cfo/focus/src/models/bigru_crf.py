@@ -85,6 +85,7 @@ class BiGRUCRF(object):
 
     return z
 
+
   def _apply_bigru(self, inputs, lengths, unit_num, scope=None, reuse=False):
     scope_name = scope or 'bigru'
     with tf.variable_scope(scope_name, reuse=reuse):
@@ -172,6 +173,7 @@ class BiGRUCRF(object):
         error_t += 0 if viterbi_sequence==tag.tolist() else 1
 
     return loss_t, error_t
+
 
   def evaluate(self, data_producer, model_path):
     with tf.Session() as self.sess:

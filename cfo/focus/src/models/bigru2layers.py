@@ -46,6 +46,7 @@ class BiGRU2Layers(object):
     # Accuracy OR Error
     self.error = tf.reduce_sum(tf.abs(tf.to_int32(tf.argmax(logits, 2)) - self.tags))
 
+
   def _apply_relu(self, inputs, input_unit_num, output_unit_num, scope=None, reuse=False):
     rank = len(inputs.get_shape())
     if rank == 3:

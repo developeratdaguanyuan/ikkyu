@@ -32,9 +32,6 @@ class BiGRU(object):
     # BiGRU
     z, _ = self._apply_bigru(word_projected, self.lengths, self.hidden_dim, 'encoder')
 
-    #if training:
-    #  z = tf.nn.dropout(z, 0.85)
-
     # Project Layer
     logits = self._apply_linear(z, self.hidden_dim * 2, self.class_sz)
     self.sequence_tags = tf.to_int32(tf.argmax(logits, 2))
