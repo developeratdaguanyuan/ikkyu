@@ -3,14 +3,15 @@ import numpy as np
 import logging
 
 
-class BiGRU(object):
+class BiGRU2LayersDev(object):
   def __init__(self, vocab_size, relation_size, word_vectors, relation_vectors,
                batch=100, neg_sample_num=1024,
-               relation_dim=256, embedding_dim=300, hidden_dim=300,
+               relation_tag_dim=1851, relation_dim=256, embedding_dim=300, hidden_dim=300,
                learning_rate=1e-3):
     self.batch = batch
     self.neg_sample_num = neg_sample_num
 
+    self.relation_tag_dim = relation_tag_dim
     self.relation_dim = relation_dim
     self.embedding_dim = embedding_dim
     self.hidden_dim = hidden_dim
@@ -23,6 +24,10 @@ class BiGRU(object):
     self.lengths = tf.placeholder(tf.int32, [self.batch])
     self.y = tf.placeholder(tf.int32, [self.batch])
     self.y_neg = tf.placeholder(tf.int32, [self.batch, self.neg_sample_num])
+
+    self.y_vector = tf.placeholder(tf.float32, [self.batch, self.relation_tag_dim])
+    self.y_vector_neg = tf.placeholder(tf.float32, [self.batch, self.neg_sample_num, self.relation_tag_dim])
+
     self.training = tf.placeholder(tf.bool, name='training')
 
     # Embedding layer
@@ -30,96 +35,83 @@ class BiGRU(object):
                                       initializer=tf.constant_initializer(word_vectors),
                                       shape=[self.vocab_sz, self.embedding_dim], trainable=False)
     self.rel_embeddings = tf.get_variable('rel_embedding_matrix', dtype='float',
-                                         # initializer=tf.constant_initializer(relation_vectors),
-                                          shape=[self.relation_sz, self.relation_dim], trainable=True)
+                                          initializer=tf.constant_initializer(relation_vectors),
+                                          shape=[self.relation_sz, self.relation_dim], trainable=False)
 
     # Lookup
     e = tf.nn.embedding_lookup(self.embeddings, self.s)
     y_pos_e = tf.nn.embedding_lookup(self.rel_embeddings, self.y)
     y_neg_e = tf.nn.embedding_lookup(self.rel_embeddings, self.y_neg)
 
-    # Batch Norm
-    #e_2d = tf.reshape(e, [-1, self.embedding_dim])
-    #e_2d_nb = self._batch_norm(e_2d, self.embedding_dim, self.training, 'embedding_bn')
-    #e = tf.reshape(e_2d_nb, [self.batch, -1, self.embedding_dim])
-
-    #y_neg_e_2d = tf.reshape(y_neg_e, [-1, relation_dim])
-    #y_e_concat = tf.concat([y_pos_e, y_neg_e_2d], 0)
-    #y_e_concat = self._batch_norm(y_e_concat, relation_dim, self.training, 'relation_bn')
-    #split0, split1 = tf.split(y_e_concat, [self.batch, self.batch * self.neg_sample_num], 0)
-    #y_pos_e = split0
-    #y_neg_e = tf.reshape(split1, [-1, self.neg_sample_num, relation_dim])
-
-
-    #y_pos_e = self._batch_norm(y_pos_e, relation_dim, self.training, 'relation_bn')
-    #y_neg_e = self._batch_norm(y_neg_e, relation_dim, self.training, 'relation_bn')
-    #y_pos_e = tf.contrib.layers.batch_norm(y_pos_e, center=True, scale=True, variables_collections=["relation_bn"],
-    #                                       is_training=self.training, updates_collections=None, scope='relation_bn')
-    #y_neg_e = tf.contrib.layers.batch_norm(y_neg_e, center=True, scale=True, variables_collections=["relation_bn"],
-    #                                       is_training=self.training, updates_collections=None, scope='relation_bn', reuse=True)
-
-    #y_pos_e = tf.layers.batch_normalization(y_pos_e, training=self.training, name='relation_bn')
-    #y_neg_e = tf.layers.batch_normalization(y_neg_e, training=self.training, name='relation_bn', reuse=True)
-
     # Dropout
-    # e = tf.cond(self.training, lambda: tf.nn.dropout(e, 0.8), lambda: e)
-    # y_pos_e = tf.cond(self.training, lambda: tf.nn.dropout(y_pos_e, 0.8), lambda: y_pos_e)
-    # y_neg_e = tf.cond(self.training, lambda: tf.nn.dropout(y_neg_e, 0.8), lambda: y_neg_e)
+    # e = tf.cond(self.training, lambda: tf.nn.dropout(e, 0.5), lambda: e)
+    # y_pos_e = tf.cond(self.training, lambda: tf.nn.dropout(y_pos_e, 0.5), lambda: y_pos_e)
+    # y_neg_e = tf.cond(self.training, lambda: tf.nn.dropout(y_neg_e, 0.5), lambda: y_neg_e)
 
     # Project Layer
     p = self._apply_relu(e, self.embedding_dim, self.embedding_dim, 'embedding_project')
     y_pos_p = self._apply_relu(y_pos_e, self.relation_dim, self.hidden_dim, 'relation_project')
     y_neg_p = self._apply_relu(y_neg_e, self.relation_dim, self.hidden_dim, 'relation_project', True)
 
-    # BiGRU Layer
-    z, _ = self._apply_bigru(p, self.lengths, self.hidden_dim, 'encoder')
+    y_vector_pos_p = self._apply_linear(self.y_vector, self.relation_tag_dim, self.hidden_dim, 'relation_vector_project')
+    y_vector_neg_p = self._apply_linear(self.y_vector_neg, self.relation_tag_dim, self.hidden_dim, 'relation_vector_project', True)
+
+
+    # Dropout
+    # p = tf.cond(self.training, lambda: tf.nn.dropout(p, 0.7), lambda: p)
+    # y_pos_p = tf.cond(self.training, lambda: tf.nn.dropout(y_pos_p, 0.7), lambda: y_pos_p)
+    # y_neg_p = tf.cond(self.training, lambda: tf.nn.dropout(y_neg_p, 0.7), lambda: y_neg_p)
+
+    # BiGRU Layer on p
+    z, _ = self._apply_bigru(p, self.lengths, self.hidden_dim, '1st_encoder')
+    # z = tf.cond(self.training, lambda: tf.nn.dropout(z, 0.5), lambda: z)
+    z, _ = self._apply_bigru(z, self.lengths, self.hidden_dim * 2, '2nd_encoder')
     z = tf.transpose(z, perm=[1, 0, 2])[-1]
-    z = self._apply_linear(z, self.hidden_dim * 2, self.hidden_dim, 'bigru_output_project')
+    z = self._apply_linear(z, self.hidden_dim * 4, self.hidden_dim, 'after_rnn_projection')
 
     # Merge Layer
     z_expansion = tf.reshape(tf.tile(tf.expand_dims(z, 1), [1, self.neg_sample_num, 1]), [-1, self.hidden_dim])
     y_neg_p = tf.reshape(y_neg_p, [-1, self.hidden_dim])
+    y_vector_neg_p = tf.reshape(y_vector_neg_p, [-1, self.hidden_dim])
     score_pos = self._apply_dot(z, y_pos_p)
-    self.pos_score_print = score_pos
     score_pos = tf.reshape(tf.tile(tf.expand_dims(score_pos, 1), [1, self.neg_sample_num, 1]), [-1, 1])
+    score_vector_pos = self._apply_dot(z, y_vector_pos_p)
+    score_vector_pos = tf.reshape(tf.tile(tf.expand_dims(score_vector_pos, 1), [1, self.neg_sample_num, 1]), [-1, 1])
     score_neg = self._apply_dot(z_expansion, y_neg_p)
-    #self.score = score_neg
-    self.loss = tf.reduce_mean(tf.maximum(0., 1. - score_pos + score_neg))
-    self.rank = tf.count_nonzero(tf.maximum(0., score_neg - score_pos))
-    #update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    #with tf.control_dependencies(update_ops):
+    score_vector_neg = self._apply_dot(z_expansion, y_vector_neg_p)
+
+    score_concat_pos = tf.concat([score_pos, score_vector_pos], 1)
+    score_concat_neg = tf.concat([score_neg, score_vector_neg], 1)
+    
+    score_output_pos = self._apply_linear(score_concat_pos, 2, 1, 'score_combine')
+    score_output_neg = self._apply_linear(score_concat_neg, 2, 1, 'score_combine', True)
+
+    self.loss = tf.reduce_mean(tf.maximum(0., 1. - score_output_pos + score_output_neg))
+    self.rank = tf.count_nonzero(tf.maximum(0., score_output_neg - score_output_pos))
+    #self.loss = tf.reduce_mean(tf.maximum(0., 1. - score_pos + score_neg))
+    #self.loss = tf.reduce_mean(tf.maximum(0., 1. - score_vector_pos - score_pos + score_vector_neg + score_neg))
+    #self.rank = tf.count_nonzero(tf.maximum(0., score_neg - score_pos))
+    #self.rank = tf.count_nonzero(tf.maximum(0., score_vector_neg + score_neg - score_vector_pos - score_pos))
     self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
+    #self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss)
 
     # Service Layer
+    self.z_online = z[0]
+
     self.y_test = tf.placeholder(tf.int32, [1837])
     y_test_e = tf.nn.embedding_lookup(self.rel_embeddings, self.y_test)
     self.y_test_p = self._apply_relu(y_test_e, self.relation_dim, self.hidden_dim, 'relation_project', True)
-    #y_test_p = tf.transpose(y_test_p)
-    #y_e = self._batch_norm(self.rel_embeddings, relation_dim, self.training, 'relation_bn')
-    #y_p = self._apply_relu(y_e, self.relation_dim, self.hidden_dim, 'relation_project', True)
-    self.z_online = z[0]
-    self.score = tf.tensordot(self.z_online, self.y_test_p, [[0], [1]])
+    self.score_1 = tf.expand_dims(tf.tensordot(self.z_online, self.y_test_p, [[0], [1]]), 1)
 
+    self.y_vector_test = tf.placeholder(tf.float32, [1837, self.relation_tag_dim])
+    self.y_vector_test_p = self._apply_linear(self.y_vector_test, self.relation_tag_dim, self.hidden_dim, 'relation_vector_project', True)
+    self.score_2 = tf.expand_dims(tf.tensordot(self.z_online, self.y_vector_test_p, [[0], [1]]), 1)
 
-  def _batch_norm(self, inputs, size, training, scope=None):
-    scope_name = scope or 'batch_norm'
-    with tf.variable_scope(scope_name):
-      beta = tf.Variable(tf.constant(0.0, shape=[size]), name='beta', trainable=True)
-      gamma = tf.Variable(tf.constant(1.0, shape=[size]), name='gamma', trainable=True)
-      fc_mean, fc_var = tf.nn.moments(inputs, [0])
-      ema = tf.train.ExponentialMovingAverage(decay=0.5)
-
-      def mean_var_with_update():
-        ema_apply_op = ema.apply([fc_mean, fc_var])
-        with tf.control_dependencies([ema_apply_op]):
-          return tf.identity(fc_mean), tf.identity(fc_var)
-
-      mean, var = tf.cond(training,
-                          mean_var_with_update,
-                          lambda:(ema.average(fc_mean), ema.average(fc_var)))
-      bn_inputs = tf.nn.batch_normalization(inputs, mean, var, beta, gamma, 1e-3)
-
-    return bn_inputs
+    self.score = self._apply_linear(tf.concat([self.score_1, self.score_2], 1), 2, 1, 'score_combine', True)
+    # self.score = tf.tensordot(self.z_online, self.y_test_p, [[0], [1]])
+    ## self.score_1 = tf.tensordot(self.z_online, y_vector_test_p, [[0], [1]])
+    ## self.score_2 = tf.tensordot(self.z_online, self.y_test_p, [[0], [1]])
+    ## self.score = self.score_1 + self.score_2
 
 
   def _apply_dot(self, input_1, input_2):
@@ -188,12 +180,7 @@ class BiGRU(object):
 
 
   def train(self, train_data_producer, valid_data_producer, num_epoch):
-    logging.basicConfig(filename='../logs/bigru.log', filemode='w', level=logging.INFO)
-    #vars_to_train = tf.trainable_variables()
-    #vars_for_bn = tf.get_collection_ref('relation_bn')
-    #vars_for_bn = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='relation_bn')
-    #vars_to_train = list(set(vars_to_train).union(set(vars_for_bn)))
-    #saver = tf.train.Saver(vars_to_train)
+    logging.basicConfig(filename='../logs/bigru2layers_dev.log', filemode='w', level=logging.INFO)
     saver = tf.train.Saver()
     with tf.Session() as self.sess:
       self.sess.run(tf.global_variables_initializer())
@@ -201,10 +188,10 @@ class BiGRU(object):
       train_loss, valid_loss, valid_rank, rank = 0, float('inf'), float('inf'), 0
       num_iteration = num_epoch * train_data_producer.size / self.batch
       for i in range(num_iteration):
-        questions, tags, neg_tags = train_data_producer.next(self.batch)
+        questions, tags, neg_tags, tag_vectors, neg_tag_vectors = train_data_producer.next(self.batch)
         lengths = np.array([questions.shape[1] for _ in range(self.batch)])
 
-        feed = {self.s: questions, self.lengths: lengths, self.y: tags, self.y_neg: neg_tags, self.training: True}
+        feed = {self.s: questions, self.lengths: lengths, self.y: tags, self.y_neg: neg_tags, self.training: True, self.y_vector: tag_vectors, self.y_vector_neg: neg_tag_vectors}
         ret = self.sess.run([self.optimizer, self.loss, self.rank], feed_dict=feed)
         train_loss += ret[1]
         rank += ret[2]
@@ -222,7 +209,7 @@ class BiGRU(object):
 
           if valid_rank_t <= valid_rank:
             valid_rank = valid_rank_t
-            save_path = saver.save(self.sess, "../save_models/bigru_" + str(i))
+            save_path = saver.save(self.sess, "../save_models/bigru2layers_dev_" + str(i))
             logging.info("Model saved in file: %s", save_path)
             
 
@@ -234,51 +221,21 @@ class BiGRU(object):
         loss = loss / data_producer.size
         rank = float(rank) / data_producer.size
         break
-      questions, tags, neg_tags = data
+      questions, tags, neg_tags, tag_vectors, neg_tag_vectors = data
       lengths = np.array([questions.shape[1] for _ in range(self.batch)])
-      feed = {self.s: questions, self.lengths: lengths, self.y: tags, self.y_neg: neg_tags, self.training: False}
+      feed = {self.s: questions, self.lengths: lengths, self.y: tags, self.y_neg: neg_tags, self.training: False, self.y_vector: tag_vectors, self.y_vector_neg: neg_tag_vectors}
       ret = self.sess.run([self.loss, self.rank], feed_dict=feed)
       loss += ret[0]
       rank += ret[1]
+
     return loss, rank
 
-  def _evaluate_rank(self, data_producer):
-    rank = 0
-    while True:
-      data = data_producer.next(self.batch)
-      if data is None:
-        break
-      questions, tags, _ = data
-      lengths = np.array([questions.shape[1] for _ in range(self.batch)])
-      pos_score_print = 0
-      position_list = list()
-      for i in range(7):
-        neg_tags = np.matrix(np.arange(i * 1024, (i + 1) * 1024))
-        feed = {self.s: questions, self.lengths: lengths, self.y: tags, self.y_neg: neg_tags, self.training: False}
-        ret = self.sess.run([self.score, self.pos_score_print], feed_dict=feed)
-        position_list.extend(ret[0])
-        pos_score_print = ret[1]
-      print pos_score_print
-      print sum(val > position_list[tags[0]] for val in position_list)
-    return rank
 
   def evaluate(self, data_producer, model_path):
     with tf.Session() as self.sess:
       self.sess.run(tf.global_variables_initializer())
       saver = tf.train.Saver()
-      #vars_to_train = tf.trainable_variables()
-      #vars_for_bn = tf.get_collection_ref('relation_bn')
-      #vars_for_bn = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='relation_bn')
-      #vars_to_train = list(set(vars_to_train).union(set(vars_for_bn)))
-
-      #vars_all = tf.all_variables()
-      #vars_to_init = list(set(vars_all) - set(vars_to_train))
-      #init = tf.variables_initializer(vars_to_init)
-      #self.sess.run(init)
-
-      #saver = tf.train.Saver(vars_to_train)
       saver.restore(self.sess, model_path)
-      #return self._evaluate(data_producer)
       return self._evaluate(data_producer)
 
     return None
