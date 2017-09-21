@@ -45,6 +45,11 @@ class BiGRU(object):
     self.rank = tf.count_nonzero(tf.maximum(0., neg_scores - scores))
     self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
 
+    # Service
+    self.test_tags = tf.placeholder(tf.float32, [None, None])
+    test_tags_p = self._apply_relu(self.test_tags, self.relation_dim, self.hidden_dim * 2, 'relation_project', True)
+    self.test_z = z[0]
+    self.test_score = tf.tensordot(self.test_z, test_tags_p, [[0], [1]])
 
   def _apply_dot(self, input_1, input_2):
     tmp = tf.multiply(input_1, input_2)
