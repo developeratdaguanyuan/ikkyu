@@ -55,10 +55,13 @@ public class BuildRelationData {
       String relation_name = tokens[1].trim().replace("www.freebase.com", "");
       String relation_id = relation_id_map.get(relation_name);
 
+      relation_name = relation_name.replaceAll("_", " ");
+      relation_name = relation_name.replaceAll("/", " ").trim();
+
       String question = tokens[3].trim();
       List<String> question_tokens = EnglishTokenizer.tokenizer(question.toLowerCase());
-      writer.write(
-          question_tokens.stream().collect(Collectors.joining(" ")) + "\t" + relation_id + "\n");
+      writer.write(question_tokens.stream().collect(Collectors.joining(" ")) + "\t" + relation_id
+          + "\t" + relation_name + "\n");
     }
     reader.close();
     writer.close();
